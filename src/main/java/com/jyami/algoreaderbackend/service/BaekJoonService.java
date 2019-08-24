@@ -137,7 +137,7 @@ public class BaekJoonService {
         List<BaekJoon> baekJoons = new ArrayList<>();
         for (int i = 1; i <= 165; i++) {
             List<BaekJoon> onePageProblem = getOnePageProblem(i);
-//            System.out.println(onePageProblem);
+            System.out.println(onePageProblem);
             baekJoons.addAll(onePageProblem);
 //            baekJoons.addAll(getOnePageProblem(i));
         }
