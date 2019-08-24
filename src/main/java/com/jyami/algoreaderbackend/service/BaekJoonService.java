@@ -1,6 +1,7 @@
 package com.jyami.algoreaderbackend.service;
 
 import com.jyami.algoreaderbackend.domain.BaekJoon;
+import com.jyami.algoreaderbackend.domain.BaekJoonML;
 import com.jyami.algoreaderbackend.domain.BaekJoonRepositroy;
 import com.jyami.algoreaderbackend.dto.BaekJoonResDto;
 import com.jyami.algoreaderbackend.exception.CrawlerException;
@@ -10,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,7 +27,12 @@ import static com.jyami.algoreaderbackend.util.ConfortableJsoup.getConnection;
 @RequiredArgsConstructor
 public class BaekJoonService {
 
+    private final RestTemplate myRestTemplate;
+
     private final BaekJoonRepositroy baekJoonRepositroy;
+
+    @Value("${myrest.url}")
+    private String restUrl;
 
     public List<BaekJoonResDto> getUser(String userId) {
         Document document = getConnection("https://www.acmicpc.net/user/" + userId);
@@ -34,6 +42,14 @@ public class BaekJoonService {
                 .collect(Collectors.toList());
 
         return baekJoonRepositroy.findByNumberIn(collect).stream()
+                .map(BaekJoon::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<BaekJoonResDto> getUserRecommend(String userId) {
+
+        BaekJoonML recommendId = myRestTemplate.getForObject(restUrl + userId, BaekJoonML.class);
+        return baekJoonRepositroy.findByNumberIn(recommendId.getRecommendNum()).stream()
                 .map(BaekJoon::toDto)
                 .collect(Collectors.toList());
     }
