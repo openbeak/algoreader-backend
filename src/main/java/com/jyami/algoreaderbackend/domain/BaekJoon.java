@@ -40,4 +40,16 @@ public class BaekJoon {
                 .submitCount(this.submitCount)
                 .build();
     }
+
+    public BaekJoonResDto toDto(String time) {
+        return BaekJoonResDto.builder()
+                .number(this.number)
+                .name(this.name)
+                .time(time)
+                .category(this.category)
+                .collectCount(this.collectCount)
+                .collectRate(this.collectRate)
+                .submitCount(this.submitCount)
+                .build();
+    }
 }

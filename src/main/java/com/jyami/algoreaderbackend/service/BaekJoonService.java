@@ -12,13 +12,12 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jyami.algoreaderbackend.service.BaekJoonCategoryProblem.*;
-import static com.jyami.algoreaderbackend.util.ConfortableJsoup.*;
+import static com.jyami.algoreaderbackend.util.ConfortableJsoup.convertTime;
+import static com.jyami.algoreaderbackend.util.ConfortableJsoup.getConnection;
 
 @Service
 @Slf4j
@@ -41,27 +40,28 @@ public class BaekJoonService {
 
     public List<BaekJoonResDto> getProblemNumberAndTime(List<Element> elements) {
 
-        List<Long> numbers = new ArrayList<>();
-        List<BaekJoonResDto> baekJoonResDtos = new ArrayList<>();
+        HashMap<Long, String> maps = new HashMap<>();
+        List<Long> collect = new ArrayList<>();
 
         for (Element element : elements) {
             try {
-                Long number = getNumber(element, numbers);
-                String time = getTime(element, numbers, number);
-                List<BaekJoon> byNumber = baekJoonRepositroy.findByNumber(number);
-                for (BaekJoon b : byNumber) {
-                    BaekJoonResDto baekJoonResDto = b.toDto();
-                    baekJoonResDto.setTime(time);
-                    baekJoonResDtos.add(baekJoonResDto);
-                }
+                Set<Long> keys = maps.keySet();
+                Long number = getNumber(element, keys);
+                String time = getTime(element);
+                maps.put(number, time);
+                collect.add(number);
             } catch (CrawlerException e) {
                 continue;
             }
         }
-        return baekJoonResDtos;
+
+        return baekJoonRepositroy.findByNumberIn(collect).stream()
+                .map(e -> e.toDto(maps.get(e.getNumber())))
+                .collect(Collectors.toList());
     }
 
-    private Long getNumber(Element e, List<Long> numbers) {
+
+    private Long getNumber(Element e, Set<Long> numbers) {
         Elements number = e.select(".problem_title");
         if (number.isEmpty()) {
             throw new CrawlerException("없는문제");
@@ -73,11 +73,9 @@ public class BaekJoonService {
         return convertingNumber;
     }
 
-    private String getTime(Element e, List<Long> numbers, Long convertingNumber) {
+    private String getTime(Element e) {
         String time = e.select(":nth-child(9) a").get(0).attr("title");
-        String convertingTime = convertTime(time);
-        numbers.add(convertingNumber);
-        return convertingTime;
+        return convertTime(time);
     }
 
     public List<BaekJoonResDto> getUserProblemListWithTime(String userId) {
